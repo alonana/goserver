@@ -1,9 +1,12 @@
 package main
 
-import "github.com/alonana/goserver/webserver"
+import (
+	"github.com/alonana/goserver/logging"
+	"github.com/alonana/goserver/webserver"
+)
 
 func main() {
-	println("Starting")
+	logging.AppLoggerInit("goserver.log")
+	logging.AppLogger.Info("Starting")
 	webserver.Start()
-	println("Done")
 }
