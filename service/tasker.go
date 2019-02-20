@@ -2,20 +2,51 @@ package service
 
 import (
 	stderrors "errors"
-	"github.com/alonana/goserver/logging"
+	"fmt"
 	"github.com/go-errors/errors"
 	"math/rand"
+	"time"
 )
+
+const poolSize = 5
+
+type jobRequest struct {
+	time     string
+	response chan string
+}
+
+var sendWorkChannel = make(chan jobRequest, poolSize)
+
+func init() {
+	for i := 0; i < poolSize; i++ {
+		go poolThread(i)
+	}
+}
+
+func poolThread(i int) {
+	for {
+		select {
+		case s := <-sendWorkChannel:
+			s.response <- fmt.Sprintf("work %v got %v\n", i, s.time)
+		}
+	}
+}
 
 func Start() (string, error) {
 	if rand.Intn(2) == 0 {
 		return "", stderrors.New("unexpected")
 	}
-	return "Started", nil
+
+	req := jobRequest{
+		response: make(chan string),
+		time:     time.Now().String(),
+	}
+	sendWorkChannel <- req
+
+	return <-req.response, nil
 }
 
 func Stop() (string, error) {
-	logging.AppLogger.Error(errors.New("YOYO"))
 	if rand.Intn(2) == 0 {
 		return "", errors.New("unexpected")
 	}
